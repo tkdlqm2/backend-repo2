@@ -31,7 +31,6 @@ jobs:
       uses: docker/login-action@v2
       with:
         username: mongwaves
-#        password: dckr_pat_W7CjnhoZ2bRSIIP_rycAdhK5MeE
         password: ${{ secrets.DOCKER_PAT }}
     
     - name: Build and push Docker image
