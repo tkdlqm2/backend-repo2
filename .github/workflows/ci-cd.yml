@@ -87,10 +87,27 @@ jobs:
         uses: azure/setup-kubectl@v3
 
       # Base64 디코딩 및 kubeconfig 설정
-      - name: Set up kubeconfig
+      - name: Set up kubeconfig with debugging
         run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d -w 0 > kubeconfig.yaml
+          # Base64 문자열 길이 확인
+          echo "Secret length: $(echo "${{ secrets.KUBE_CONFIG }}" | wc -c)"
+
+          # Base64 디코딩 시도 (오류 출력 확인)
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml 2>decode_error.txt || echo "Decoding failed"
+
+          # 오류 메시지 확인
+          if [ -f decode_error.txt ]; then
+            echo "Decoding error: $(cat decode_error.txt)"
+          fi
+
+          # 대안: 직접 내용 사용
+          if [ ! -s kubeconfig.yaml ]; then
+            echo "Falling back to direct content"
+            echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+          fi
+
           chmod 600 kubeconfig.yaml
+          echo "File size: $(wc -c < kubeconfig.yaml) bytes"
           echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
 
       # API 서버 연결 테스트
