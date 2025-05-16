@@ -6,7 +6,7 @@ metadata:
   labels:
     app: payment-service
 spec:
-  replicas: 2  # Active-Active 구성을 위한 최소 2개 복제본
+  replicas: 2
   selector:
     matchLabels:
       app: payment-service
@@ -22,54 +22,54 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: mongwaves/order-service:latest  # CI/CD 파이프라인에서 이 부분이 업데이트됨
+          image: mongwaves/payment-service:latest  # order-service에서 payment-service로 변경
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 8081  # 8080에서 8081로 변경 (application.yml 포트 확인)
           env:
             - name: SPRING_CONFIG_LOCATION
               value: "classpath:/application.yml,/config/application.yml"
             - name: SERVER_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: order-config
+                  name: payment-config  # order-config에서 payment-config로 변경
                   key: APPLICATION_PORT
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
                 configMapKeyRef:
-                  name: order-config
+                  name: payment-config  # 변경
                   key: SPRING_PROFILES_ACTIVE
             - name: LOGGING_LEVEL_ROOT
               valueFrom:
                 configMapKeyRef:
-                  name: order-config
+                  name: payment-config  # 변경
                   key: LOGGING_LEVEL_ROOT
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://order-db-service.database.svc.cluster.local:5432/orderdb"
+              value: "jdbc:postgresql://payment-db-service.database.svc.cluster.local:5432/paymentdb"  # 변경
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: order-secrets
+                  name: payment-secrets  # 변경
                   key: DATABASE_USER
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: order-secrets
+                  name: payment-secrets  # 변경
                   key: DATABASE_PASSWORD
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 configMapKeyRef:
-                  name: order-config
+                  name: payment-config  # 변경
                   key: KAFKA_BOOTSTRAP_SERVERS
-            - name: PAYMENT_SERVICE_URL
+            - name: ORDER_SERVICE_URL  # PAYMENT_SERVICE_URL에서 변경
               valueFrom:
                 configMapKeyRef:
-                  name: order-config
-                  key: PAYMENT_SERVICE_URL
+                  name: payment-config  # 변경
+                  key: ORDER_SERVICE_URL  # 변경
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: order-secrets
+                  name: payment-secrets  # 변경
                   key: JWT_SECRET
           volumeMounts:
             - name: config-volume
@@ -84,21 +84,21 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 8081  # 8080에서 8081로 변경
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 8080
+              port: 8081  # 8080에서 8081로 변경
             initialDelaySeconds: 120
             periodSeconds: 20
             timeoutSeconds: 5
       volumes:
         - name: config-volume
           configMap:
-            name: order-config
+            name: payment-config  # 변경
             items:
               - key: application.yml
                 path: application.yml
