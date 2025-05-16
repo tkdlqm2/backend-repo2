@@ -90,21 +90,25 @@ jobs:
         uses: azure/setup-kubectl@v3
 
       - name: Set up kubeconfig
-        uses: azure/k8s-set-context@v3
-        with:
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          # Base64 인코딩된 KUBE_CONFIG 환경 변수를 디코딩하여 파일로 저장
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
+          
+          # KUBECONFIG 환경 변수를 설정하여 kubectl이 이 파일을 사용하도록 함
+          echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
+          shell: /bin/bash
 
       - name: Deploy to Kubernetes
         run: |
           # 이미지 태그 업데이트
           sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
-          
+
           # 배포 적용
           kubectl apply -f kubernetes/namespace.yaml
           kubectl apply -f kubernetes/configmap.yaml
           kubectl apply -f kubernetes/secret.yaml
           kubectl apply -f kubernetes/deployment.yaml
           kubectl apply -f kubernetes/service.yaml
-          
+
           # 배포 완료 확인
           kubectl rollout status deployment/payment-service -n payment-service
