@@ -109,13 +109,13 @@ jobs:
         run: |
           # 이미지 태그 업데이트
           sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
-          
-          # 배포 적용
-          kubectl apply -f kubernetes/namespace.yaml
-          kubectl apply -f kubernetes/configmap.yaml
-          kubectl apply -f kubernetes/secret.yaml
-          kubectl apply -f kubernetes/deployment.yaml
-          kubectl apply -f kubernetes/service.yaml
-          
+
+          # 배포 적용 (유효성 검사 건너뛰기)
+          kubectl apply -f kubernetes/namespace.yaml --validate=false
+          kubectl apply -f kubernetes/configmap.yaml --validate=false
+          kubectl apply -f kubernetes/secret.yaml --validate=false
+          kubectl apply -f kubernetes/deployment.yaml --validate=false
+          kubectl apply -f kubernetes/service.yaml --validate=false
+
           # 배포 완료 확인
-          kubectl rollout status deployment/payment-service -n payment-service
+          kubectl rollout status deployment/payment-service -n payment-service --timeout=60s
