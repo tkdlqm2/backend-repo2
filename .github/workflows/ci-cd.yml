@@ -86,24 +86,31 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
 
-      # 수정된 부분: Base64 디코딩 추가
+      # Base64 디코딩 및 kubeconfig 설정
       - name: Set up kubeconfig
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
           echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
 
+      # API 서버 연결 테스트
+      - name: Test Kubernetes connection
+        run: |
+          kubectl get nodes
+          kubectl cluster-info
+
+      # 배포 적용 (디렉토리 이름 확인 필요)
       - name: Deploy to Kubernetes
         run: |
           # 이미지 태그 업데이트
-          sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
+          sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernates/deployment.yaml
           
           # 배포 적용
-          kubectl apply -f kubernetes/namespace.yaml
-          kubectl apply -f kubernetes/configmap.yaml
-          kubectl apply -f kubernetes/secret.yaml
-          kubectl apply -f kubernetes/deployment.yaml
-          kubectl apply -f kubernetes/service.yaml
+          kubectl apply -f kubernates/namespace.yaml
+          kubectl apply -f kubernates/configmap.yaml
+          kubectl apply -f kubernates/secret.yaml
+          kubectl apply -f kubernates/deployment.yaml
+          kubectl apply -f kubernates/service.yaml
           
           # 배포 완료 확인
           kubectl rollout status deployment/payment-service -n payment-service
