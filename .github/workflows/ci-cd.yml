@@ -110,7 +110,7 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
 
           # 이미지 태그 업데이트
-          sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
+          sed -i '' "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
 
           # 배포 적용 (유효성 검사 건너뛰기)
           kubectl apply -f kubernetes/namespace.yaml --validate=false
