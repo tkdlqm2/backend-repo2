@@ -89,26 +89,14 @@ jobs:
       # Base64 디코딩 및 kubeconfig 설정
       - name: Set up kubeconfig with debugging
         run: |
-          # Base64 문자열 길이 확인
-          echo "Secret length: $(echo "${{ secrets.KUBE_CONFIG }}" | wc -c)"
-
-          # Base64 디코딩 시도 (오류 출력 확인)
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml 2>decode_error.txt || echo "Decoding failed"
-
-          # 오류 메시지 확인
-          if [ -f decode_error.txt ]; then
-            echo "Decoding error: $(cat decode_error.txt)"
-          fi
-
-          # 대안: 직접 내용 사용
-          if [ ! -s kubeconfig.yaml ]; then
-            echo "Falling back to direct content"
-            echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-          fi
-
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig.yaml
           chmod 600 kubeconfig.yaml
-          echo "File size: $(wc -c < kubeconfig.yaml) bytes"
           echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
+          
+          # 디버깅용 (선택 사항)
+          echo "Kubeconfig file size: $(wc -c < kubeconfig.yaml) bytes"
+          grep "server:" kubeconfig.yaml | sed 's/\(server: https:\/\/\)[^:]*\(.*\)/\1[REDACTED]\2/'
+
 
       # API 서버 연결 테스트
       - name: Test Kubernetes connection
