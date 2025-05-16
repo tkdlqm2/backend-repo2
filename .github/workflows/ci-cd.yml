@@ -28,20 +28,15 @@ jobs:
         run: ./gradlew clean build -x test
 
       # JAR 파일 확인 및 위치 검사
+  # JAR 파일 확인 및 위치 검사
       - name: Check JAR file
         run: |
           echo "Checking build outputs..."
           find . -name "*.jar" | grep -v "gradle-wrapper.jar"
           mkdir -p build/libs/
-          # JAR 파일이 다른 위치에 있는 경우 복사
-          if [ -f "build/libs/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
+          # settings.gradle 변경 후에는 payment-service-0.0.1-SNAPSHOT.jar 파일이 생성됨
+          if [ -f "build/libs/payment-service-0.0.1-SNAPSHOT.jar" ]; then
             echo "JAR file found at expected location."
-          elif [ -f "build/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
-            echo "Moving JAR from build/ to build/libs/"
-            cp build/paymentservice-0.0.1-SNAPSHOT.jar build/libs/payment-service-0.0.1-SNAPSHOT.jar
-          elif [ -f "build/libs/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
-            echo "Renaming JAR file"
-            cp build/libs/paymentservice-0.0.1-SNAPSHOT.jar build/libs/payment-service-0.0.1-SNAPSHOT.jar
           else
             echo "Looking for any JAR file..."
             FOUND_JAR=$(find . -name "*.jar" | grep -v "gradle-wrapper.jar" | head -1)
@@ -53,6 +48,7 @@ jobs:
               exit 1
             fi
           fi
+      
 
       # Dockerfile 수정: JAR 파일 이름 확인
       - name: Update Dockerfile
