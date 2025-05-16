@@ -97,6 +97,13 @@ jobs:
           echo "Kubeconfig file size: $(wc -c < kubeconfig.yaml) bytes"
           grep "server:" kubeconfig.yaml | sed 's/\(server: https:\/\/\)[^:]*\(.*\)/\1[REDACTED]\2/'
 
+
+      # API 서버 연결 테스트
+      - name: Test Kubernetes connection
+        run: |
+          kubectl get nodes
+          kubectl cluster-info
+
       # 배포 적용 (디렉토리 이름 확인 필요)
       - name: Deploy to Kubernetes
         run: |
