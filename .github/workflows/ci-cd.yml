@@ -26,7 +26,53 @@ jobs:
 
       - name: Build with Gradle (Skip Tests)
         run: ./gradlew clean build -x test
-        # -x test 옵션으로 테스트 단계를 건너뜁니다
+
+      # JAR 파일 확인 및 위치 검사
+      - name: Check JAR file
+        run: |
+          echo "Checking build outputs..."
+          find . -name "*.jar" | grep -v "gradle-wrapper.jar"
+          mkdir -p build/libs/
+          # JAR 파일이 다른 위치에 있는 경우 복사
+          if [ -f "build/libs/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
+            echo "JAR file found at expected location."
+          elif [ -f "build/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
+            echo "Moving JAR from build/ to build/libs/"
+            cp build/paymentservice-0.0.1-SNAPSHOT.jar build/libs/payment-service-0.0.1-SNAPSHOT.jar
+          elif [ -f "build/libs/paymentservice-0.0.1-SNAPSHOT.jar" ]; then
+            echo "Renaming JAR file"
+            cp build/libs/paymentservice-0.0.1-SNAPSHOT.jar build/libs/payment-service-0.0.1-SNAPSHOT.jar
+          else
+            echo "Looking for any JAR file..."
+            FOUND_JAR=$(find . -name "*.jar" | grep -v "gradle-wrapper.jar" | head -1)
+            if [ -n "$FOUND_JAR" ]; then
+              echo "Found JAR at $FOUND_JAR, copying to build/libs/payment-service-0.0.1-SNAPSHOT.jar"
+              cp "$FOUND_JAR" build/libs/payment-service-0.0.1-SNAPSHOT.jar
+            else
+              echo "No JAR file found, build may have failed."
+              exit 1
+            fi
+          fi
+
+      # Dockerfile 수정: JAR 파일 이름 확인
+      - name: Update Dockerfile
+        run: |
+          # 변경된 Dockerfile 생성
+          cat > Dockerfile.new << 'EOF'
+          FROM openjdk:17-slim
+
+          WORKDIR /app
+
+          COPY build/libs/payment-service-0.0.1-SNAPSHOT.jar app.jar
+
+          EXPOSE 8081
+
+          ENTRYPOINT ["java", "-jar", "app.jar"]
+          EOF
+          
+          # 새 Dockerfile로 교체
+          mv Dockerfile.new Dockerfile
+          cat Dockerfile
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -41,7 +87,7 @@ jobs:
           push: true
           tags: |
             mongwaves/payment-service:latest
-            mongwaves/payment-service:${{ github.sha }} 
+            mongwaves/payment-service:${{ github.sha }}
 
       # 쿠버네티스 배포를 위한 설정
       - name: Set up kubectl
