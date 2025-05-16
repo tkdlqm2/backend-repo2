@@ -93,18 +93,17 @@ jobs:
           chmod 600 kubeconfig.yaml
           echo "KUBECONFIG=$(pwd)/kubeconfig.yaml" >> $GITHUB_ENV
 
-      # 수정된 부분: 디렉토리 이름 수정 (kubernates -> kubernetes)
       - name: Deploy to Kubernetes
         run: |
           # 이미지 태그 업데이트
-          sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernates/deployment.yaml
+          sed -i "s|mongwaves/payment-service:latest|mongwaves/payment-service:${{ github.sha }}|g" kubernetes/deployment.yaml
           
           # 배포 적용
-          kubectl apply -f kubernates/namespace.yaml
-          kubectl apply -f kubernates/configmap.yaml
-          kubectl apply -f kubernates/secret.yaml
-          kubectl apply -f kubernates/deployment.yaml
-          kubectl apply -f kubernates/service.yaml
+          kubectl apply -f kubernetes/namespace.yaml
+          kubectl apply -f kubernetes/configmap.yaml
+          kubectl apply -f kubernetes/secret.yaml
+          kubectl apply -f kubernetes/deployment.yaml
+          kubectl apply -f kubernetes/service.yaml
           
           # 배포 완료 확인
           kubectl rollout status deployment/payment-service -n payment-service
